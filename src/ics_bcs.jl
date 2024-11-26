@@ -1,6 +1,66 @@
 @variables t, x, y, z
 D = Differential(t)
 
+
+function SideSetFront(t)
+    if (t <= -1)
+        return 0.1 * t + 0.1
+    elseif (t >= 1)
+        return -0.1 * t + 0.1
+    else
+        return 0
+    end
+end
+
+function SideSetBack(t)
+    if (t < 0)
+        return 0.1 * (1.0 + t)
+    else
+        return 0.1 * (1.0 - t)
+    end
+end
+
+
+function SideSetFront30X(t)
+    if (t <= -1)
+        return (0.1 * t + 0.1) * 0.8660254037844387
+    elseif (t >= 1)
+        return (-0.1 * t + 0.1) * 0.8660254037844387
+    else
+        return 0
+    end
+end
+
+function SideSetBack30X(t)
+    if (t < 0)
+        return (0.1 * (1.0 + t)) * 0.8660254037844387
+    else
+        return (0.1 * (1.0 - t)) * 0.8660254037844387
+    end
+end
+
+function SideSetFront30Y(t)
+    if (t <= -1)
+        return (0.1 * t + 0.1) * 0.5
+    elseif (t >= 1)
+        return (-0.1 * t + 0.1) * 0.5
+    else
+        return 0
+    end
+end
+
+function SideSetBack30Y(t)
+    if (t < 0)
+        return (0.1 * (1.0 + t)) * 0.5
+    else
+        return (0.1 * (1.0 - t)) * 0.5
+    end
+end
+
+function Zero(t)
+    return 0
+end
+
 function SMDirichletBC(input_mesh::ExodusDatabase, bc_params::Dict{Any,Any})
     node_set_name = bc_params["node set"]
     expression = bc_params["function"]
@@ -8,9 +68,23 @@ function SMDirichletBC(input_mesh::ExodusDatabase, bc_params::Dict{Any,Any})
     node_set_id = node_set_id_from_name(node_set_name, input_mesh)
     node_set_node_indices = Exodus.read_node_set_nodes(input_mesh, node_set_id)
     # expression is an arbitrary function of t, x, y, z in the input file
-    disp_num = eval(Meta.parse(expression))
-    velo_num = expand_derivatives(D(disp_num))
-    acce_num = expand_derivatives(D(velo_num))
+    if expression == "front"
+        disp_num = SideSetFront
+    elseif expression == "back"
+        disp_num = SideSetBack
+    elseif expression == "front30X"
+        disp_num = SideSetFront30X
+    elseif expression == "front30Y"
+        disp_num = SideSetFront30Y
+    elseif expression == "back30X"
+        disp_num = SideSetBack30X
+    elseif expression == "back30Y"
+        disp_num = SideSetBack30Y
+    else
+        disp_num = Zero
+    end
+    velo_num = 0 #expand_derivatives(D(disp_num))
+    acce_num = 0 #expand_derivatives(D(velo_num))
     SMDirichletBC(
         node_set_name,
         offset,
@@ -126,9 +200,9 @@ function apply_bc(model::SolidMechanics, bc::SMDirichletBC)
             y => model.reference[2, node_index],
             z => model.reference[3, node_index],
         )
-        disp_sym = substitute(bc.disp_num, values)
-        velo_sym = substitute(bc.velo_num, values)
-        acce_sym = substitute(bc.acce_num, values)
+        disp_sym = bc.disp_num(model.time)  #substitute(bc.disp_num, values)
+        velo_sym = 0 #substitute(bc.velo_num, values)
+        acce_sym = 0 #substitute(bc.acce_num, values)
         disp_val = extract_value(disp_sym)
         velo_val = extract_value(velo_sym)
         acce_val = extract_value(acce_sym)

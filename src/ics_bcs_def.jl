@@ -13,7 +13,7 @@ mutable struct SMDirichletBC <: RegularBoundaryCondition
     offset::Int64
     node_set_id::Int64
     node_set_node_indices::Vector{Int64}
-    disp_num::Num
+    disp_num::Function
     velo_num::Num
     acce_num::Num
 end
