@@ -17,6 +17,7 @@ mutable struct SolidMechanics <: Model
     failed::Bool
     mesh_smoothing::Bool
     smooth_reference::String
+    mesh_name::String
 end
 
 # TODO: Add potential energy as in the above

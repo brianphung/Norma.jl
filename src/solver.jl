@@ -1,3 +1,5 @@
+using NPZ
+
 function create_step(solver_params::Dict{Any,Any})
     step_name = solver_params["step"]
     if step_name == "full Newton"
@@ -574,6 +576,16 @@ function solve(integrator::TimeIntegrator, solver::Solver, model::Model)
         update_solver_convergence_criterion(solver, norm_residual)
         iteration_number += 1
         if stop_solve(solver, iteration_number) == true
+            # Here, we'll write out the converged stiffness, force, and displacement
+            # values into a numpy array for Python debugging
+            mesh_name = model.mesh_name
+            time = integrator.time
+            K_filename = "brp_db_$(mesh_name)_stiffness_t_$(time).npy"
+            f_filename = "brp_db_$(mesh_name)_force_t_$(time).npy"
+            u_filename = "brp_db_$(mesh_name)_u_t_$(time).npy"
+            npzwrite(K_filename, solver.hessian)
+            npzwrite(f_filename, solver.gradient)
+            npzwrite(u_filename, integrator.displacement)
             break
         end
     end
