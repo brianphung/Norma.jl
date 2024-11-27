@@ -23,37 +23,37 @@ end
 
 function SideSetFront30X(t)
     if (t <= -1)
-        return (0.1 * t + 0.1) * 0.8660254037844387
+        return (0.1 * t + 0.1 - 0.1) * 0.8660254037844387
     elseif (t >= 1)
-        return (-0.1 * t + 0.1) * 0.8660254037844387
+        return (-0.1 * t + 0.1 - 0.1) * 0.8660254037844387
     else
-        return 0
+        return -0.1 * 0.8660254037844387
     end
 end
 
 function SideSetBack30X(t)
     if (t < 0)
-        return (0.1 * (1.0 + t)) * 0.8660254037844387
+        return (0.1 * (1.0 + t) - 0.1) * 0.8660254037844387
     else
-        return (0.1 * (1.0 - t)) * 0.8660254037844387
+        return (0.1 * (1.0 - t) - 0.1) * 0.8660254037844387
     end
 end
 
 function SideSetFront30Y(t)
     if (t <= -1)
-        return (0.1 * t + 0.1) * 0.5
+        return (0.1 * t + 0.1 - 0.1) * 0.5
     elseif (t >= 1)
-        return (-0.1 * t + 0.1) * 0.5
+        return (-0.1 * t + 0.1 - 0.1) * 0.5
     else
-        return 0
+        return -0.1  * 0.5
     end
 end
 
 function SideSetBack30Y(t)
     if (t < 0)
-        return (0.1 * (1.0 + t)) * 0.5
+        return (0.1 * (1.0 + t) - 0.1) * 0.5
     else
-        return (0.1 * (1.0 - t)) * 0.5
+        return (0.1 * (1.0 - t) - 0.1) * 0.5
     end
 end
 
