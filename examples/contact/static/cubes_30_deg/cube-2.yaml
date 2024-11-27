@@ -20,7 +20,7 @@ boundary conditions:
     - node set: nsx+
       component: x
       function: "(0.1 * (abs(t) - 1.0) - 0.1 - 1) * 0.8660254037844387"
-    - node set: nsx-
+    - node set: nsx+
       component: y
       function: "(0.1 * (abs(t) - 1.0) - 0.1 - 1) * 0.5"
     - node set: nsz-
