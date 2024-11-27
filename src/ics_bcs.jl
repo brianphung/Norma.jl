@@ -57,6 +57,35 @@ function SideSetBack30Y(t)
     end
 end
 
+function SideSetFront30X2(t)
+    return (0.1 * (abs(t) - 1.0) - 0.1 - 1) * 0.8660254037844387
+end
+
+function SideSetFront30Y2(t)
+    return (0.1 * (abs(t) - 1.0) - 0.1 - 1) * 0.5
+end
+
+
+function SideSetBack30X2(t)
+    if (t <= -1)
+        return (0.1 * (abs(t) - 1.0) - 0.1 - 1) * 0.8660254037844387
+    elseif (t >= 1)
+        return (0.1 * (abs(t) - 1.0) - 0.1 - 1) * 0.8660254037844387
+    else
+        return (-0.1 - 1.0) * 0.8660254037844387
+    end
+end
+
+function SideSetBack30Y2(t)
+    if (t <= -1)
+        return (0.1 * (abs(t) - 1.0) - 0.1 - 1) * 0.5
+    elseif (t >= 1)
+        return (0.1 * (abs(t) - 1.0) - 0.1 - 1) * 0.5
+    else
+        return (-0.1 - 1.0)  * 0.5
+    end
+end
+
 function Zero(t)
     return 0
 end
@@ -80,6 +109,14 @@ function SMDirichletBC(input_mesh::ExodusDatabase, bc_params::Dict{Any,Any})
         disp_num = SideSetBack30X
     elseif expression == "back30Y"
         disp_num = SideSetBack30Y
+    elseif expression == "front30X2"
+        disp_num = SideSetFront30X2
+    elseif expression == "front30Y2"
+        disp_num = SideSetFront30Y2
+    elseif expression == "back30X2"
+        disp_num = SideSetBack30X2
+    elseif expression == "back30Y2"
+        disp_num = SideSetBack30Y2
     else
         disp_num = Zero
     end
