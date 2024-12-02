@@ -328,8 +328,10 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
             model.acceleration[:, node_index],
             closest_normal,
         )
-        dof_index = [3 * node_index - 2]
-        model.free_dofs[dof_index] .= false
+        for dir in 1:3
+            dof_index = [3 * node_index - dir]
+            model.free_dofs[dof_index] .= false
+        end
     end
 end
 
