@@ -4,6 +4,7 @@ include("ics_bcs.jl")
 
 function SolidMechanics(params::Dict{Any,Any})
     input_mesh = params["input_mesh"]
+    mesh_name = params["input mesh file"]
     model_params = params["model"]
     coords = read_coordinates(input_mesh)
     num_nodes = Exodus.num_nodes(input_mesh.init)
@@ -93,6 +94,7 @@ function SolidMechanics(params::Dict{Any,Any})
         failed,
         mesh_smoothing,
         smooth_reference,
+        mesh_name,
     )
 end
 
