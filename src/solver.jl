@@ -184,9 +184,11 @@ function copy_solution_source_targets(
     solver::Any,
     model::SolidMechanics,
 )
-    displacement = integrator.displacement
+    displacement_local = integrator.displacement
     solver.solution = displacement
+    displacement = model.global_transform' * displacement_local
     _, num_nodes = size(model.reference)
+
     for node ∈ 1:num_nodes
         nodal_displacement = displacement[3*node-2:3*node]
         model.current[:, node] = model.reference[:, node] + nodal_displacement
@@ -574,10 +576,8 @@ function solve(integrator::TimeIntegrator, solver::Solver, model::Model)
     # Solves in local coordinates
     while true
         step = compute_step(integrator, model, solver, step_type)
-        # Step is given in local coordinates, convert to global coordinates
-
-        step = model.global_transform[model.free_dofs, model.free_dofs]' * step
         solver.solution[model.free_dofs] += step
+        # Displacements are given in local coordinates, convert to global coordinates
         correct(integrator, solver, model)
         evaluate(integrator, solver, model)
         if model.failed == true

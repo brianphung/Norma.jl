@@ -222,9 +222,9 @@ function apply_bc(model::SolidMechanics, bc::SMDirichletInclined)
         disp_vector_glob = bc.rotation_matrix' * disp_vector_local
         velo_vector_glob = bc.rotation_matrix' * velo_vector_local
         accel_vector_glob = bc.rotation_matrix' * accel_vector_local
-        if disp_val_loc > 1e-6
-            println("Debug")
-        end
+        # if disp_val_loc > 1e-6
+        #     println("Debug")
+        # end
         dof_index = 3 * (node_index - 1) + 1 # dof_index is specificly just for X
         model.current[:, node_index] =
             model.reference[:, node_index] + disp_vector_glob
