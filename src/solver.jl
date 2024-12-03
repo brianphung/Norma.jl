@@ -185,7 +185,7 @@ function copy_solution_source_targets(
     model::SolidMechanics,
 )
     displacement_local = integrator.displacement
-    solver.solution = displacement
+    solver.solution = displacement_local
     displacement = model.global_transform' * displacement_local
     _, num_nodes = size(model.reference)
 
@@ -595,14 +595,14 @@ function solve(integrator::TimeIntegrator, solver::Solver, model::Model)
         if stop_solve(solver, iteration_number) == true
             # Here, we'll write out the converged stiffness, force, and displacement
             # values into a numpy array for Python debugging
-            mesh_name = model.mesh_name
-            time = integrator.time
-            K_filename = "brp_db_$(mesh_name)_stiffness_t_$(time).npy"
-            f_filename = "brp_db_$(mesh_name)_force_t_$(time).npy"
-            u_filename = "brp_db_$(mesh_name)_u_t_$(time).npy"
-            npzwrite(K_filename, solver.hessian)
-            npzwrite(f_filename, solver.gradient)
-            npzwrite(u_filename, integrator.displacement)
+            # mesh_name = model.mesh_name
+            # time = integrator.time
+            # K_filename = "brp_db_$(mesh_name)_stiffness_t_$(time).npy"
+            # f_filename = "brp_db_$(mesh_name)_force_t_$(time).npy"
+            # u_filename = "brp_db_$(mesh_name)_u_t_$(time).npy"
+            # npzwrite(K_filename, solver.hessian)
+            # npzwrite(f_filename, solver.gradient)
+            # npzwrite(u_filename, integrator.displacement)
             break
         end
     end
