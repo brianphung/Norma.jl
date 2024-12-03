@@ -61,6 +61,7 @@ function SMContactSchwarzBC(
     is_dirichlet = true
     transfer_operator =
         zeros(length(global_to_local_map), length(coupled_global_to_local_map))
+    nodal_normals = zeros(length(side_set_node_indices), 3)
     SMContactSchwarzBC(
         side_set_name,
         side_set_id,
@@ -73,6 +74,7 @@ function SMContactSchwarzBC(
         coupled_side_set_id,
         is_dirichlet,
         transfer_operator,
+        nodal_normals
     )
 end
 
@@ -304,7 +306,7 @@ end
 
 function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContactSchwarzBC)
     side_set_node_indices = unique(bc.side_set_node_indices)
-    for node_index ∈ side_set_node_indices
+    for (side_set_index, node_index) ∈ enumerate(side_set_node_indices)
         point = model.current[:, node_index]
         point_new, ξ, _, closest_face_node_indices, closest_normal, _ = find_and_project(
             point,
@@ -328,10 +330,12 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
             model.acceleration[:, node_index],
             closest_normal,
         )
-        for dir in 1:3
-            dof_index = [3 * node_index - dir]
-            model.free_dofs[dof_index] .= false
-        end
+
+        bc.nodal_normals[side_set_index, :] = closest_normal
+
+        dof_index = [3 * node_index - 2]
+        model.free_dofs[dof_index] .= false
+
     end
 end
 

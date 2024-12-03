@@ -394,6 +394,8 @@ function detect_contact(sim::MultiDomainSimulation)
                     overlap = check_overlap(subsim.model, bc)
                     contact_domain[domain] = overlap == true
                 end
+                # BRP propagate contact status to model object
+                subsim.model.active_contact = contact_domain[domain]
             end
         end
     end

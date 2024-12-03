@@ -77,6 +77,14 @@ function SolidMechanics(params::Dict{Any,Any})
     else
         smooth_reference = ""
     end
+    # BRP add contact status to the model object
+    active_contact = false
+    global_transform_t = zeros(3 * num_nodes, 3 * num_nodes)
+    for (rot_index, ni) in enumerate(range(1,num_nodes))
+        base = (rot_index-1)*3
+        global_transform_t[base+1:base+3, base+1:base+3] .= Diagonal(ones(3))
+    end
+    global_transform = sparse(global_transform_t)
     SolidMechanics(
         input_mesh,
         materials,
@@ -95,6 +103,8 @@ function SolidMechanics(params::Dict{Any,Any})
         mesh_smoothing,
         smooth_reference,
         mesh_name,
+        active_contact,
+        global_transform,
     )
 end
 
@@ -310,6 +320,27 @@ function evaluate(_::QuasiStatic, model::SolidMechanics)
     stiffness = Vector{Float64}()
     blocks = Exodus.read_sets(input_mesh, Block)
     num_blks = length(blocks)
+    # BRP IncSup
+    rows_trans = Vector{Int64}()
+    col_trans = Vector{Int64}()
+    global_stiffness_transform = Vector{Float64}()
+    # BRP IncSup End
+    
+    # BRP Contact
+    schwarz_node_indices = Vector{Int64}()
+    node_index_normals = zeros(0,3)
+    if model.active_contact == true
+        for (idx, bc) in enumerate(model.boundary_conditions)
+            if isa(bc, SMContactSchwarzBC)
+                if (bc.is_dirichlet == true)
+                    append!(schwarz_node_indices, bc.side_set_node_indices)
+                    node_index_normals = vcat(node_index_normals, bc.nodal_normals)
+                end
+            end
+        end
+    end
+    # BRP Contact End
+
     for blk_index ∈ 1:num_blks
         material = materials[blk_index]
         ρ = material.ρ
@@ -363,14 +394,56 @@ function evaluate(_::QuasiStatic, model::SolidMechanics)
                 voigt_cauchy = voigt_cauchy_from_stress(material, P, F, J)
                 model.stress[blk_index][blk_elem_index][point] = voigt_cauchy
             end
+
+            # BRP IncSup
+            T_local = zeros(num_elem_dofs, num_elem_dofs)
+            for (rot_index, ni) in enumerate(node_indices)
+                base = (rot_index-1)*3
+                if ni in schwarz_node_indices
+                    sch_node_pos = findall(x -> x == ni, schwarz_node_indices)
+                    # Build a rotation matrix based on the normal
+                    # We enforce that the local X is fixed
+                    local_vector_1 = -vec(node_index_normals[sch_node_pos, :])
+                    # Unsure if local vector is already normed
+                    local_vector_1 = local_vector_1/norm(local_vector_1)
+                    # Create an aribtrary orthonormal basis with x' parallel
+                    # to the contact normal
+                    # Hardcode, I know I'm not rotating about the z
+                    local_vector_3 = vec([ 0, 0, 1])
+                    local_vector_2 = cross(local_vector_1, local_vector_3)
+                    
+                    # The rotation matrix is build using the columns of the bases
+                    T_nodal = hcat(local_vector_1, local_vector_2)
+                    T_nodal = hcat(T_nodal, local_vector_3)
+                    contains_nan = any(isnan, T_nodal)
+                    if contains_nan
+                        print(T_nodal)
+                        exit()
+                    end
+                    T_nodal2 =  [ 0.7071067811865476 0.7071067811865476 0.; -0.7071067811865476 0.7071067811865476 0.; 0. 0. 1.]
+                    
+                    T_local[base+1:base+3, base+1:base+3] .= Diagonal(ones(3)) #T_nodal2
+                else
+                    T_local[base+1:base+3, base+1:base+3] .= Diagonal(ones(3))
+                end
+            end
+            assemble(rows_trans, col_trans, global_stiffness_transform, T_local, elem_dofs)
+            # BRP End IncSup
+
             energy += element_energy
             model.stored_energy[blk_index][blk_elem_index] = element_energy
             internal_force[elem_dofs] += element_internal_force
             assemble(rows, cols, stiffness, element_stiffness, elem_dofs)
         end
     end
+
+    # BRP Inclined Support
+    global_transform = sparse(rows_trans, col_trans, global_stiffness_transform )
+    # BRP End Inclined Support
+
     stiffness_matrix = sparse(rows, cols, stiffness)
     model.internal_force = internal_force
+    model.global_transform = global_transform
     return energy, internal_force, body_force, stiffness_matrix
 end
 
@@ -389,6 +462,7 @@ function evaluate(integrator::Newmark, model::SolidMechanics)
     mass = Vector{Float64}()
     blocks = Exodus.read_sets(input_mesh, Block)
     num_blks = length(blocks)
+
     for blk_index ∈ 1:num_blks
         material = materials[blk_index]
         ρ = material.ρ
