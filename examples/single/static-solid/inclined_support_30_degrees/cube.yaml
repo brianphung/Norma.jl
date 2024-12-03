@@ -21,20 +21,17 @@ time integrator:
 boundary conditions:
   Dirichlet:
     - node set: nsx-
-      component: z
-      function: "0.0"
-    - node set: nsx-
       component: x
-      function: "0.0"
+      function: "0.866025403784439 * 0.1*t"
     - node set: nsx-
       component: y
-      function: "0.0"
+      function: "0.5 * 0.1*t"
   Inclined Dirichlet:
     - node set: nsx+
       normalx: 0.866025403784439
       normaly: 0.5
       normalz: 0
-      function: "1.0 * t"
+      function: "-0.1*t"
 solver:
   type: Hessian minimizer
   step: full Newton

@@ -343,8 +343,9 @@ function evaluate(integrator::QuasiStatic, solver::HessianMinimizer, model::Soli
     integrator.stored_energy = stored_energy
     solver.value = stored_energy
     external_force = body_force + model.boundary_force
-    solver.gradient = internal_force - external_force
-    solver.hessian = stiffness_matrix
+    #println("Global Trans", model.global_transform)
+    solver.gradient = model.global_transform * (internal_force - external_force)
+    solver.hessian = model.global_transform * stiffness_matrix
 end
 
 function evaluate(integrator::QuasiStatic, solver::SteepestDescent, model::SolidMechanics)
@@ -442,7 +443,18 @@ function compute_step(
     _::NewtonStep,
 )
     free = model.free_dofs
-    return -solver.hessian[free, free] \ solver.gradient[free]
+    solution = nothing
+    try
+        return -solver.hessian[free, free] \ solver.gradient[free]
+    catch
+        hess = -solver.hessian[free, free]
+        grad = solver.gradient[free]
+        println(grad)
+        println(hess)
+        #solution = -solver.hessian[free, free] \ solver.gradient[free]
+        exit()
+    end
+    return solution
 end
 
 function compute_step(
@@ -547,19 +559,24 @@ function stop_solve(_::ExplicitSolver, _::Int64)
 end
 
 function solve(integrator::TimeIntegrator, solver::Solver, model::Model)
-    predict(integrator, solver, model)
-    evaluate(integrator, solver, model)
+    predict(integrator, solver, model) # Everything is in global
+    evaluate(integrator, solver, model) # Everything except disp is in local coords
     if model.failed == true
         return
     end
+    # Solves in local coords
     residual = solver.gradient
     norm_residual = norm(residual[model.free_dofs])
     solver.initial_norm = norm_residual
     iteration_number = 0
     solver.failed = solver.failed || model.failed
     step_type = solver.step
+    # Solves in local coordinates
     while true
         step = compute_step(integrator, model, solver, step_type)
+        # Step is given in local coordinates, convert to global coordinates
+
+        step = model.global_transform[model.free_dofs, model.free_dofs]' * step
         solver.solution[model.free_dofs] += step
         correct(integrator, solver, model)
         evaluate(integrator, solver, model)
@@ -589,4 +606,6 @@ function solve(integrator::TimeIntegrator, solver::Solver, model::Model)
             break
         end
     end
+    # Once we are complete, rotate the force back
+    solver.gradient = model.global_transform' * solver.gradient
 end
