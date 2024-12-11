@@ -36,15 +36,7 @@ function SMDirichletInclined(input_mesh::ExodusDatabase, bc_params::Dict{Any,Any
 
     # The local basis is determined from a normal vector
     axis = bc_params["normal vector"]
-    axis = axis/norm(axis)
-    e1 = [1.0, 0.0, 0.0]
-    w = cross(e1, axis)
-    s = norm(w)
-    θ = asin(s)
-    m = w/s
-    rv = θ * m
-    # Rotation is converted via the psuedo vector to rotation matrix
-    rotation_matrix = MiniTensor.rt_from_rv(rv)'
+    rotation_matrix = MiniTensor.rt_from_normal_vector(axis)
     
     SMDirichletInclined(
         node_set_name,
@@ -97,6 +89,8 @@ function SMContactSchwarzBC(
     is_dirichlet = true
     transfer_operator =
         zeros(length(local_from_global_map), length(coupled_local_from_global_map))
+    rotation_matrix = zeros(3,3)
+    active_contact = false
     SMContactSchwarzBC(
         side_set_name,
         side_set_id,
@@ -109,6 +103,8 @@ function SMContactSchwarzBC(
         coupled_side_set_id,
         is_dirichlet,
         transfer_operator,
+        rotation_matrix,
+        active_contact,
     )
 end
 
@@ -425,6 +421,8 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
         point = model.current[:, node_index]
         new_point, ξ, _, closest_face_node_indices, closest_normal, _ =
             project_point_to_side_set(point, bc.coupled_subsim.model, bc.coupled_side_set_id)
+        rotation_matrix_from_normal = MiniTensor.rt_from_normal_vector(-1*closest_normal)
+        bc.rotation_matrix = rotation_matrix_from_normal
         model.current[:, node_index] = new_point
         num_nodes = length(closest_face_node_indices)
         element_type = get_element_type(2, num_nodes)

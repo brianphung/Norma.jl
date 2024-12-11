@@ -1,5 +1,5 @@
 module MiniTensor
-using LinearAlgebra: norm
+using LinearAlgebra: norm, cross
 
 #
 # Lie groups and Lie algebra utilities, mostly algebra of rotations
@@ -519,6 +519,20 @@ function rt_from_rv(w::AbstractVector{Float64})
     q = q_from_rv(w)
     R = rt_from_q(q)
     return R
+end
+
+#
+# Rotation tensor that aligns lab e1 to an input normal vector
+#
+function rt_from_normal_vector(normal::AbstractVector{Float64})
+    normal = normal/norm(normal)
+    e1 = [1.0, 0.0, 0.0]
+    w = cross(e1, normal)
+    s = norm(w)
+    θ = asin(s)
+    m = w/s
+    rv = θ * m     
+    return rt_from_rv(rv)'
 end
 
 #

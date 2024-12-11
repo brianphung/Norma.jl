@@ -325,6 +325,14 @@ function evaluate(integrator::QuasiStatic, model::SolidMechanics)
                 push!(inclined_support_bc_indices, bc_idx)
             end
         end
+        if isa(bc, SMContactSchwarzBC)
+            if (bc.is_dirichlet == true) && (bc.active_contact == true)
+                append!(inclined_support_node_indices, bc.side_set_node_indices)
+                for _ in bc.side_set_node_indices
+                    push!(inclined_support_bc_indices, bc_idx)
+                end
+            end
+        end
     end
 
     for blk_index ∈ 1:num_blks
