@@ -7,7 +7,7 @@
 D = Differential(t)
 using NPZ
 
-reference_sim = true
+reference_sim = false
 bc_test = 0
 
 function SMDirichletBC(input_mesh::ExodusDatabase, bc_params::Dict{String,Any})
@@ -626,7 +626,7 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
         e1 = [1.0, 0.0, 0.0]
         w = cross(axis, e1)
         s = norm(w)
-        if (s ≈ 0.0)
+        if (s ≈ 0.0) || (reference_sim == true)
             bc.rotation_matrix = I(3)
         else
             θ = asin(s)
@@ -714,7 +714,7 @@ function apply_sm_schwarz_contact_neumann(model::SolidMechanics, bc::SMContactSc
             normal
         )
         model_time = model.time
-        global_transform = 
+
         if reference_sim == true
             npzwrite("model_boundary_force_$model_time-$local_node.npz", model.boundary_force[3*global_node-2:3*global_node])
         else
@@ -772,7 +772,8 @@ function get_dst_traction(dst_bc::SchwarzBoundaryCondition)
     src_global_force = -dst_bc.coupled_subsim.model.internal_force
     if typeof(dst_bc) == SMContactSchwarzBC
         src_rotation = dst_bc.coupled_subsim.model.global_transform
-        src_global_force = src_rotation * src_global_force
+        #print(src_rotation)
+        src_global_force = src_rotation' * src_global_force
     end
     src_local_traction = local_traction_from_global_force(src_mesh, src_side_set_id, src_global_force)
     num_dst_nodes = size(dst_bc.transfer_operator, 1)
