@@ -1,3 +1,8 @@
+# Norma.jl 1.0: Copyright 2025 National Technology & Engineering Solutions of
+# Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS,
+# the U.S. Government retains certain rights in this software. This software
+# is released under the BSD license detailed in the file license.txt in the
+# top-level Norma.jl directory.
 abstract type BoundaryCondition end
 abstract type SchwarzBoundaryCondition <: BoundaryCondition end
 abstract type RegularBoundaryCondition <: BoundaryCondition end
@@ -28,7 +33,7 @@ mutable struct SMDirichletInclined <: RegularBoundaryCondition
     velo_num::Num
     acce_num::Num
     rotation_matrix::Matrix{Float64}
-    offset::Int64
+    reference_normal::Vector{Float64}
 end
 
 mutable struct SMNeumannBC <: RegularBoundaryCondition
@@ -47,7 +52,6 @@ mutable struct SMContactSchwarzBC <: ContactSchwarzBoundaryCondition
     side_set_node_indices::Vector{Int64}
     coupled_subsim::Simulation
     coupled_bc_index::Int64
-    coupled_mesh::ExodusDatabase
     coupled_block_id::Int64
     coupled_side_set_id::Int64
     is_dirichlet::Bool
@@ -57,6 +61,7 @@ mutable struct SMContactSchwarzBC <: ContactSchwarzBoundaryCondition
 end
 
 mutable struct SMOverlapSchwarzBC <: OverlapSchwarzBoundaryCondition
+    side_set_name::String
     side_set_node_indices::Vector{Int64}
     coupled_nodes_indices::Vector{Vector{Int64}}
     interpolation_function_values::Vector{Vector{Float64}}
@@ -73,7 +78,6 @@ mutable struct SMNonOverlapSchwarzBC <: NonOverlapSchwarzBoundaryCondition
     coupled_subsim::Simulation
     subsim::Simulation
     coupled_side_set_id::Int64
-    transfer_operator::Matrix{Float64}
     is_dirichlet::Bool
+    transfer_operator::Matrix{Float64}
 end
-

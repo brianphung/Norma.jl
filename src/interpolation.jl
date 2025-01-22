@@ -1,3 +1,8 @@
+# Norma.jl 1.0: Copyright 2025 National Technology & Engineering Solutions of
+# Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS,
+# the U.S. Government retains certain rights in this software. This software
+# is released under the BSD license detailed in the file license.txt in the
+# top-level Norma.jl directory.
 function barycentricD2N3(ξ::Vector{Float64})
     N = [1.0 - ξ[1] - ξ[2], ξ[1], ξ[2]]
     dN = [
@@ -479,7 +484,6 @@ function get_side_set_nodal_forces(
     return nodal_force_component
 end
 
-
 # Given 3 points p1, p2, p3 that define a plane
 # determine if point p is in the same side of the normal
 # to the plane as defined by the right hand rule.
@@ -609,57 +613,42 @@ function is_inside_guess(element_type::String, nodes::Matrix{Float64}, point::Ve
     end
 end
 
-# Project a point to a side set and find the minimum distance of the projection
-# to the nodes of each face on the side set. This is done in place of a strict search
-# because the contact surfaces may be deformed and not match each other exactly.
-function project_point_to_side_set(
-    point::Vector{Float64},
-    model::SolidMechanics,
-    side_set_id::Integer,
-)
-    #we assume that we know the contact surfaces in advance
+function closest_face_to_point(point::Vector{Float64}, model::SolidMechanics, side_set_id::Integer)
     mesh = model.mesh
-    num_nodes_per_sides, side_set_node_indices =
-        Exodus.read_side_set_node_list(mesh, side_set_id)
+    num_nodes_per_sides, side_set_node_indices = Exodus.read_side_set_node_list(mesh, side_set_id)
     ss_node_index = 1
-    new_point = point
     closest_face_nodes = Array{Float64}(undef, 0)
     closest_face_node_indices = Array{Int64}(undef, 0)
-    space_dim = length(point)
-    parametric_dim = space_dim - 1
-    closest_ξ = zeros(parametric_dim)
-    closest_normal = zeros(space_dim)
     minimum_nodal_distance = Inf
-    closest_surface_distance = 0.0
     for num_nodes_side ∈ num_nodes_per_sides
-        face_node_indices =
-            side_set_node_indices[ss_node_index:ss_node_index+num_nodes_side-1]
+        face_node_indices = side_set_node_indices[ss_node_index:ss_node_index+num_nodes_side-1]
         face_nodes = model.current[:, face_node_indices]
-        trial_point, ξ, surface_distance, normal =
-            closest_point_projection(parametric_dim, face_nodes, point)
         nodal_distance = get_minimum_distance_to_nodes(face_nodes, point)
         if nodal_distance < minimum_nodal_distance
             minimum_nodal_distance = nodal_distance
-            new_point = trial_point
             closest_face_nodes = face_nodes
             closest_face_node_indices = face_node_indices
-            closest_normal = normal
-            closest_ξ = ξ
-            closest_surface_distance = surface_distance
         end
         ss_node_index += num_nodes_side
     end
-    return new_point,
-    closest_ξ,
-    closest_face_nodes,
-    closest_face_node_indices,
-    closest_normal,
-    closest_surface_distance
+    return closest_face_nodes, closest_face_node_indices, minimum_nodal_distance
+end
+
+# Find the minimum distance of a point to the nodes of each face on the side set
+# and then project the point that closest face in the side set.
+# This is done in place of a strict search because the contact surfaces may be deformed
+# and not match each other exactly. We assume that we know the contact surfaces in advance
+function project_point_to_side_set(point::Vector{Float64}, model::SolidMechanics, side_set_id::Integer)
+    face_nodes, face_node_indices, _ = closest_face_to_point(point, model, side_set_id)
+    space_dim = length(point)
+    parametric_dim = space_dim - 1
+    new_point, ξ, surface_distance, normal = closest_point_projection(parametric_dim, face_nodes, point)
+    return new_point, ξ, face_nodes, face_node_indices, normal, surface_distance
 end
 
 function get_distance_to_centroid(nodes::Matrix{Float64}, point::Vector{Float64})
     num_nodes = size(nodes, 2)
-    centroid = sum(nodes, dims = 2) / num_nodes
+    centroid = sum(nodes, dims=2) / num_nodes
     distance = norm(centroid - point)
     return distance
 end
@@ -678,7 +667,7 @@ function get_side_set_local_from_global_map(mesh::ExodusDatabase, side_set_id::I
     for i ∈ 1:num_nodes
         local_from_global_map[Int64(unique_node_indices[i])] = i
     end
-    return local_from_global_map, num_nodes_per_sides, side_set_node_indices
+    return local_from_global_map, num_nodes_per_sides, Int64.(side_set_node_indices)
 end
 
 function get_side_set_global_from_local_map(mesh::ExodusDatabase, side_set_id::Integer)
@@ -700,12 +689,15 @@ function get_square_projection_matrix(
     local_from_global_map, num_nodes_sides, side_set_node_indices =
         get_side_set_local_from_global_map(mesh, side_set_id)
     num_nodes = length(local_from_global_map)
-    coords = model.current
+    if model.kinematics == Finite
+        coords = model.reference
+    else
+        coords = model.current
+    end
     square_projection_matrix = zeros(num_nodes, num_nodes)
     side_set_node_index = 1
     for num_nodes_side ∈ num_nodes_sides
-        side_nodes =
-            side_set_node_indices[side_set_node_index:side_set_node_index+num_nodes_side-1]
+        side_nodes = side_set_node_indices[side_set_node_index:side_set_node_index+num_nodes_side-1]
         side_coordinates = coords[:, side_nodes]
         element_type = get_element_type(2, Int64(num_nodes_side))
         num_int_points = default_num_int_pts(element_type)
@@ -735,13 +727,15 @@ function get_rectangular_projection_matrix(
     src_mesh = src_model.mesh
     src_local_from_global_map, _, _ = get_side_set_local_from_global_map(src_mesh, src_side_set_id)
     src_num_nodes = length(src_local_from_global_map)
-    src_local_indices = Array{Int64}(undef, 0)
     dst_mesh = dst_model.mesh
     dst_local_from_global_map, dst_num_nodes_sides, dst_side_set_node_indices =
         get_side_set_local_from_global_map(dst_mesh, dst_side_set_id)
     dst_num_nodes = length(dst_local_from_global_map)
-    dst_coords = dst_model.current
-    dst_local_indices = Array{Int64}(undef, 0)
+    if dst_model.kinematics == Finite
+        dst_coords = dst_model.reference
+    else
+        dst_coords = dst_model.current
+    end
     dst_side_set_node_index = 1
     rectangular_projection_matrix = zeros(dst_num_nodes, src_num_nodes)
     for dst_num_nodes_side ∈ dst_num_nodes_sides
@@ -775,7 +769,11 @@ end
 function compute_normal(mesh::ExodusDatabase, side_set_id::Int64, model::SolidMechanics)
     local_from_global_map, num_nodes_sides, side_set_node_indices =
         get_side_set_local_from_global_map(mesh, side_set_id)
-    coords = model.current
+    if model.kinematics == Finite
+        coords = model.reference
+    else
+        coords = model.current
+    end
     num_nodes = length(local_from_global_map)
     space_dim, _ = size(coords)
     normals = zeros(space_dim, num_nodes)

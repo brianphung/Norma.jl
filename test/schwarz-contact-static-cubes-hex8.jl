@@ -1,3 +1,8 @@
+# Norma.jl 1.0: Copyright 2025 National Technology & Engineering Solutions of
+# Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS,
+# the U.S. Government retains certain rights in this software. This software
+# is released under the BSD license detailed in the file license.txt in the
+# top-level Norma.jl directory.
 
 using YAML
 
@@ -8,7 +13,7 @@ using YAML
     cp("../examples/contact/static/cubes/cube-1.g", "cube-1.g", force=true)
     cp("../examples/contact/static/cubes/cube-2.g", "cube-2.g", force=true)
     input_file = "cubes.yaml"
-    params = YAML.load_file(input_file)
+    params = YAML.load_file(input_file; dicttype=Dict{String,Any})
     params["initial time"] = -2.0
     params["final time"] = 0.0
     sim = Norma.run(params, input_file)

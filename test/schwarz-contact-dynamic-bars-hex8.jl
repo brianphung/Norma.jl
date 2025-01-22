@@ -1,3 +1,8 @@
+# Norma.jl 1.0: Copyright 2025 National Technology & Engineering Solutions of
+# Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS,
+# the U.S. Government retains certain rights in this software. This software
+# is released under the BSD license detailed in the file license.txt in the
+# top-level Norma.jl directory.
 using YAML
 
 @testset "schwarz-contact-dynamic-bars-hex8" begin
@@ -7,7 +12,7 @@ using YAML
     cp("../examples/contact/dynamic/2_bars/bar-1.g", "bar-1.g", force=true)
     cp("../examples/contact/dynamic/2_bars/bar-2.g", "bar-2.g", force=true)
     input_file = "bars.yaml"
-    params = YAML.load_file(input_file)
+    params = YAML.load_file(input_file; dicttype=Dict{String,Any})
     params["initial time"] = -1.0e-06
     params["final time"] = 1.0e-06
     sim = Norma.run(params, input_file)

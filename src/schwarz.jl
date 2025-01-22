@@ -1,4 +1,9 @@
-function SolidSchwarzController(params::Dict{Any,Any})
+# Norma.jl 1.0: Copyright 2025 National Technology & Engineering Solutions of
+# Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS,
+# the U.S. Government retains certain rights in this software. This software
+# is released under the BSD license detailed in the file license.txt in the
+# top-level Norma.jl directory.
+function SolidSchwarzController(params::Dict{String,Any})
     num_domains = length(params["domains"])
     minimum_iterations = params["minimum iterations"]
     maximum_iterations = params["maximum iterations"]
@@ -81,9 +86,9 @@ function SolidSchwarzController(params::Dict{Any,Any})
     )
 end
 
-function create_schwarz_controller(params::Dict{Any,Any})
+function create_schwarz_controller(params::Dict{String,Any})
     type = params["subdomains type"]
-    if type == "static solid mechanics" || type == "dynamic solid mechanics"
+    if type == "static solid mechanics" || type == "dynamic solid mechanics" || type == "dynamic linear opinf rom"
         return SolidSchwarzController(params)
     else
         error("Unknown type of Schwarz controller : ", type)
@@ -373,6 +378,34 @@ function check_compression(
     return compression
 end
 
+function initialize_transfer_operators(sim::MultiDomainSimulation)
+    is_contact = sim.schwarz_controller.schwarz_contact
+    for subsim ∈ sim.subsims
+        bcs = subsim.model.boundary_conditions
+        for bc ∈ bcs
+            if typeof(bc) ≠ SMContactSchwarzBC && typeof(bc) ≠ SMNonOverlapSchwarzBC
+                continue
+            end
+            update_transfer_operator(subsim.model, bc)
+        end
+    end
+end
+
+function update_transfer_operators(sim::MultiDomainSimulation)
+    is_contact = sim.schwarz_controller.schwarz_contact
+    for subsim ∈ sim.subsims
+        bcs = subsim.model.boundary_conditions
+        for bc ∈ bcs
+            if typeof(bc) ≠ SMContactSchwarzBC && typeof(bc) ≠ SMNonOverlapSchwarzBC
+                continue
+            end
+            if is_contact == true || subsim.model.kinematics == Infinitesimal
+                update_transfer_operator(subsim.model, bc)
+            end
+        end
+    end
+end
+
 function detect_contact(sim::MultiDomainSimulation)
     if sim.schwarz_controller.schwarz_contact == false
         return
@@ -386,7 +419,6 @@ function detect_contact(sim::MultiDomainSimulation)
         bcs = subsim.model.boundary_conditions
         for bc ∈ bcs
             if typeof(bc) == SMContactSchwarzBC
-                compute_transfer_operator(subsim.model, bc)
                 if persistence == true
                     compression = check_compression(mesh, subsim.model, bc)
                     contact_domain[domain] = compression == true

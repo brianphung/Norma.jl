@@ -1,3 +1,8 @@
+# Norma.jl 1.0: Copyright 2025 National Technology & Engineering Solutions of
+# Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS,
+# the U.S. Government retains certain rights in this software. This software
+# is released under the BSD license detailed in the file license.txt in the
+# top-level Norma.jl directory.
 using YAML
 
 include("simulation_def.jl")
@@ -6,16 +11,16 @@ include("time_integrator.jl")
 include("solver.jl")
 include("schwarz.jl")
 
-function create_simulation(params::Dict{Any,Any}, name::String)
+function create_simulation(params::Dict{String,Any}, name::String)
     params["name"] = name
     sim_type = params["type"]
     if sim_type == "single"
         sim = SingleDomainSimulation(params)
-        create_delayed_bcs(sim)
+        create_bcs(sim)
         return sim
     elseif sim_type == "multi"
         sim = MultiDomainSimulation(params)
-        create_delayed_bcs(sim)
+        create_bcs(sim)
         return sim
     else
         error("Unknown type of simulation: ", sim_type)
@@ -24,23 +29,30 @@ end
 
 function create_simulation(input_file::String)
     println("Reading simulation file: ", input_file)
-    params = YAML.load_file(input_file)
+    params = YAML.load_file(input_file; dicttype=Dict{String,Any})
     return create_simulation(params, input_file)
 end
 
-function create_delayed_bcs(sim::SingleDomainSimulation)
+function create_bcs(sim::SingleDomainSimulation)
     boundary_conditions = create_bcs(sim.params)
+    for bc in boundary_conditions
+        if isa(bc, SMDirichletInclined)
+            sim.model.inclined_support = true
+            break
+        end
+    end
     sim.model.boundary_conditions = boundary_conditions
+    
 end
 
-function create_delayed_bcs(sim::MultiDomainSimulation)
+function create_bcs(sim::MultiDomainSimulation)
     for subsim ∈ sim.subsims
-        create_delayed_bcs(subsim)
+        create_bcs(subsim)
     end
     pair_schwarz_bcs(sim)
 end
 
-function SingleDomainSimulation(params::Dict{Any,Any})
+function SingleDomainSimulation(params::Dict{String,Any})
     name = params["name"]
     input_mesh_file = params["input mesh file"]
     output_mesh_file = params["output mesh file"]
@@ -50,14 +62,14 @@ function SingleDomainSimulation(params::Dict{Any,Any})
     output_mesh = Exodus.ExodusDatabase(output_mesh_file, "rw")
     params["output_mesh"] = output_mesh
     params["input_mesh"] = input_mesh
-    integrator = create_time_integrator(params)
-    solver = create_solver(params)
     model = create_model(params)
+    integrator = create_time_integrator(params,model)
+    solver = create_solver(params,model)
     failed = false
     return SingleDomainSimulation(name, params, integrator, solver, model, failed)
 end
 
-function MultiDomainSimulation(params::Dict{Any,Any})
+function MultiDomainSimulation(params::Dict{String,Any})
     name = params["name"]
     domain_names = params["domains"]
     subsims = Vector{SingleDomainSimulation}()
@@ -72,7 +84,7 @@ function MultiDomainSimulation(params::Dict{Any,Any})
     subsim_index = 1
     for domain_name ∈ domain_names
         println("Reading subsimulation file: ", domain_name)
-        subparams = YAML.load_file(domain_name)
+        subparams = YAML.load_file(domain_name; dicttype=Dict{String,Any})
         subparams["name"] = domain_name
         subparams["time integrator"]["initial time"] = initial_time
         subparams["time integrator"]["final time"] = final_time
@@ -83,12 +95,11 @@ function MultiDomainSimulation(params::Dict{Any,Any})
         subparams["CSV output interval"] = csv_interval
         subsim = SingleDomainSimulation(subparams)
         params[domain_name] = subsim.params
-        integrator_name = subsim.params["time integrator"]["type"]
         subsim_type =
-            is_static_or_dynamic(integrator_name) * " " * subparams["model"]["type"]
+            get_analysis_type(subsim.integrator) * " " * subparams["model"]["type"]
         if sim_type == "none"
             sim_type = subsim_type
-        elseif subsim_type ≠ sim_type
+        elseif subsim_type ≠ sim_type && subsim_type != "dynamic linear opinf rom"
             error("Multidomain subdomains must all have the same physics")
         end
         push!(subsims, subsim)
