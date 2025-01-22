@@ -28,7 +28,7 @@ boundary conditions:
     - node set: nsx-
       component: x
       function: "0.8660254037844387 * 0.1 * (1.0 - abs(t))"
-    - node set: nsy-
+    - node set: nsx-
       component: y
       function: "0.5 * 0.1 * (1.0 - abs(t))"
     - node set: nsz-

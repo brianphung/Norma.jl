@@ -5,6 +5,10 @@
 # top-level Norma.jl directory.
 @variables t, x, y, z
 D = Differential(t)
+using NPZ
+
+reference_sim = true
+bc_test = 0
 
 function SMDirichletBC(input_mesh::ExodusDatabase, bc_params::Dict{String,Any})
     node_set_name = bc_params["node set"]
@@ -616,7 +620,8 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
             project_point_to_side_set(point, bc.coupled_subsim.model, bc.coupled_side_set_id)
 
         # The local basis comes from the closest_normal:
-        axis = closest_normal
+        axis = [0.8660254037844387, 0.5, 0 ]#-closest_normal
+        println("Closest Normal", axis)
         axis = axis / norm(axis)
         e1 = [1.0, 0.0, 0.0]
         w = cross(axis, e1)
@@ -632,6 +637,28 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
         end
 
         model.current[:, node_index] = new_point
+
+        # Write New point
+        model_time = model.time
+        if reference_sim == true
+            npzwrite("model_point_$model_time-$node_index.npz", new_point)
+        else
+            temp = npzread("../cubes/model_point_$model_time-$node_index.npz")
+            if bc_test == 1
+                # The local basis comes from the closest_normal:
+                axis = [0.8660254037844387, 0.5, 0 ]#-closest_normal
+                println("Closest Normal", axis)
+                axis = axis / norm(axis)
+                e1 = [1.0, 0.0, 0.0]
+                w = cross(axis, e1)
+                s = norm(w)
+                θ = asin(s)
+                m = w / s
+                rv = θ * m
+                rotation_matrix = MiniTensor.rt_from_rv(rv)
+                model.current[:, node_index] = rotation_matrix' * temp
+            end
+        end
         num_nodes = length(closest_face_node_indices)
         element_type = get_element_type(2, num_nodes)
         N, _, _ = interpolate(element_type, ξ)
@@ -647,8 +674,15 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
             model.acceleration[:, node_index],
             closest_normal,
         )
+        println("old_point", point)
+        println("new_point", new_point)
+        println("model_velocity", model.velocity[:, node_index])
+        println("model_acceleration", model.acceleration[:, node_index])
         dof_index = [3 * node_index - 2]
         model.free_dofs[dof_index] .= false
+        global_base = 3 * (node_index - 1) # Block index in global stiffness
+        model.global_transform[global_base+1:global_base+3, global_base+1:global_base+3] = bc.rotation_matrix
+
     end
 end
 
@@ -679,6 +713,28 @@ function apply_sm_schwarz_contact_neumann(model::SolidMechanics, bc::SMContactSc
             model.boundary_force[3*global_node-2:3*global_node],
             normal
         )
+        model_time = model.time
+        global_transform = 
+        if reference_sim == true
+            npzwrite("model_boundary_force_$model_time-$local_node.npz", model.boundary_force[3*global_node-2:3*global_node])
+        else
+            
+            temp = npzread("../cubes/model_boundary_force_$model_time-$local_node.npz")
+            if bc_test == 2
+                # The local basis comes from the closest_normal:
+                axis = [0.8660254037844387, -0.5, 0 ]#-closest_normal
+                println("Closest Normal", axis)
+                axis = axis / norm(axis)
+                e1 = [1.0, 0.0, 0.0]
+                w = cross(axis, e1)
+                s = norm(w)
+                θ = asin(s)
+                m = w / s
+                rv = θ * m
+                rotation_matrix = MiniTensor.rt_from_rv(rv)
+                model.boundary_force[3*global_node-2:3*global_node] = rotation_matrix * temp
+            end
+        end
     end
 end
 
@@ -716,8 +772,8 @@ function get_dst_traction(dst_bc::SchwarzBoundaryCondition)
     src_global_force = -dst_bc.coupled_subsim.model.internal_force
     if typeof(dst_bc) == SMContactSchwarzBC
         src_rotation = dst_bc.coupled_subsim.model.global_transform
+        src_global_force = src_rotation * src_global_force
     end
-    src_global_force = src_rotation * src_global_force
     src_local_traction = local_traction_from_global_force(src_mesh, src_side_set_id, src_global_force)
     num_dst_nodes = size(dst_bc.transfer_operator, 1)
     dst_traction = zeros(3, num_dst_nodes)
@@ -959,6 +1015,9 @@ function pair_bc(name::String, bc::ContactSchwarzBoundaryCondition)
     for coupled_bc ∈ coupled_bcs
         if is_coupled_to_current(name, coupled_bc) == true
             coupled_bc.is_dirichlet = !bc.is_dirichlet
+            if coupled_bc.is_dirichlet == false
+                coupled_model.inclined_support = false
+            end
         end
     end
 end
