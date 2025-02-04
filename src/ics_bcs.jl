@@ -648,7 +648,9 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
 
         # The local basis comes from the closest_normal:
         axis = -closest_normal / norm(-closest_normal)
-
+        # BRP debug
+        #axis = [ 0.7071067811865476, 0.7071067811865476, 0 ]
+        #println("axes", axis_pre, axis)
         e1 = [1.0, 0.0, 0.0]
         w = cross(axis, e1)
         s = norm(w)
@@ -668,16 +670,31 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
         N, _, _ = interpolate(element_type, ξ)
         source_velo = bc.coupled_subsim.model.velocity[:, closest_face_node_indices] * N
         source_acce = bc.coupled_subsim.model.acceleration[:, closest_face_node_indices] * N
+        if node_index == 5
+            println("Node Index ", node_index, " Source Velocity ", source_velo)  
+            println("Closest Normal ", closest_normal)
+            println("Node Index ", node_index, " Pre Velocity ", model.velocity[:, node_index])
+        end
         model.velocity[:, node_index] = transfer_normal_component(
             source_velo,
             model.velocity[:, node_index],
             closest_normal,
         )
+        if node_index == 5
+            println("Node Index ", node_index, " Velocity ", model.velocity[:, node_index])
+            println("Node Index ", node_index, " Rotated Velocity (For Reference Only): ", bc.rotation_matrix * model.velocity[:, node_index])
+        end
+        # if (abs(model.velocity[1, node_index] - model.velocity[2, node_index]) > 1e-2)
+        #     
+        ()
+        # end
         model.acceleration[:, node_index] = transfer_normal_component(
             source_acce,
             model.acceleration[:, node_index],
             closest_normal,
         )
+        # println("Node Index ", node_index, " Acceleration ", model.acceleration[:, node_index])
+        # println("Node Index ", node_index, " Rotated Acceleration ", bc.rotation_matrix * model.acceleration[:, node_index])
         dof_index = [3 * node_index - 2]
         model.free_dofs[dof_index] .= false
         global_base = 3 * (node_index - 1) # Block index in global stiffness

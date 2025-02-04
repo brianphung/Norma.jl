@@ -360,6 +360,13 @@ function copy_solution_source_targets(
     solver::ExplicitSolver,
     model::SolidMechanics,
 )
+    dirli = false
+    for bc ∈ model.boundary_conditions
+        if typeof(bc) == SMContactSchwarzBC
+            dirli = bc.is_dirichlet
+            break
+        end
+    end
     displacement = integrator.displacement
     velocity = integrator.velocity
     acceleration = integrator.acceleration
@@ -378,7 +385,15 @@ function copy_solution_source_targets(
             nodal_acceleration = local_transform * nodal_acceleration
         end
         model.current[:, node] = model.reference[:, node] + nodal_displacement
+        if (node == 5)  && (dirli == true)
+            println("CSST ISM Pre Velocity: ", model.velocity[:, node] )
+            println("CSST Integrator Velocity: ", integrator.velocity[3*node-2:3*node])
+            println("CSST ISM Nodal Velocity: ", nodal_velocity )
+        end
         model.velocity[:, node] = nodal_velocity
+        if (node == 5) && (dirli == true)
+            println("CSST ISM Post Velocity: ", model.velocity[:, node] )
+        end
         model.acceleration[:, node] = nodal_acceleration
     end
 end
@@ -388,6 +403,12 @@ function copy_solution_source_targets(
     model::SolidMechanics,
     integrator::CentralDifference,
 )
+    dirli = false
+    for bc ∈ model.boundary_conditions
+        if typeof(bc) == SMContactSchwarzBC
+            dirli = bc.is_dirichlet
+        end
+    end
     displacement = integrator.displacement
     velocity = integrator.velocity
     acceleration = solver.solution
@@ -406,7 +427,13 @@ function copy_solution_source_targets(
             nodal_acceleration = local_transform * nodal_acceleration
         end
         model.current[:, node] = model.reference[:, node] + nodal_displacement
+        if ((node == 5) && (dirli == true))
+            println("CSST SMI Pre Velocity: ", model.velocity[:, node] )
+        end
         model.velocity[:, node] = nodal_velocity
+        if ((node == 5) && (dirli == true))
+            println("CSST SMI Post Velocity: ", model.velocity[:, node] )
+        end
         model.acceleration[:, node] = nodal_acceleration
     end
 end
