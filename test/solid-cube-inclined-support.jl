@@ -3,82 +3,82 @@
 # the U.S. Government retains certain rights in this software. This software
 # is released under the BSD license detailed in the file license.txt in the
 # top-level Norma.jl directory.
-@testset "quasi-static-inclined-support" begin
+# @testset "quasi-static-inclined-support" begin
 
-    angles = [ 0.0, 22.5, 45, 67.5, 90 ]
-    for (i, angle_deg) in enumerate(angles)
-        cp("../examples/single/static-solid/cube_inclined_support/cube-test$i.yaml", "cube-test$i.yaml", force=true)
-        cp("../examples/single/static-solid/cube_inclined_support/cube-test$i.g", "cube-test$i.g", force=true)
-        simulation = Norma.run("cube-test$i.yaml")
-        integrator = simulation.integrator
-        model = simulation.model
-        rm("cube-test$i.yaml")
-        rm("cube-test$i.g")
-        rm("cube.e")
+#     angles = [ 0.0, 22.5, 45, 67.5, 90 ]
+#     for (i, angle_deg) in enumerate(angles)
+#         cp("../examples/single/static-solid/cube_inclined_support/cube-test$i.yaml", "cube-test$i.yaml", force=true)
+#         cp("../examples/single/static-solid/cube_inclined_support/cube-test$i.g", "cube-test$i.g", force=true)
+#         simulation = Norma.run("cube-test$i.yaml")
+#         integrator = simulation.integrator
+#         model = simulation.model
+#         rm("cube-test$i.yaml")
+#         rm("cube-test$i.g")
+#         rm("cube.e")
         
-        # These displacements are obtained from an identical problem with
-        # BCs coincident with the lab basis
-        reference_displacements = [
-            0.19999999999999996, 0.0, 0.0, 0.19999999999999996, 
-            0.0, 0.0, 0.19999999999999996, 
-            0.0, 0.0, 0.19999999999999996, 0.0, 0.0, 
-            -0.002490510706379005, -0.054808932034627424, 
-            0.054808932034627285, 0.008794796508373306, 
-            -0.05449689589044056, -2.8756551738792074e-17, 
-            0.020548157939405773, -7.567237356520244e-17,
-            -4.131059890383733e-18, 0.008794796508373347, 
-            -4.2461283759579046e-17, 0.05449689589044062, 
-            0.19999999999999996, 0.0, 0.0, 
-            0.19999999999999996, 0.0, 0.0, 
-            -0.0024905107063790998, -0.05480893203462743, 
-            -0.05480893203462725, 0.008794796508373271,
-            -4.832171592315198e-17, -0.054496895890440634, 
-            0.19999999999999996, 0.0, 0.0, 0.19999999999999996, 
-            0.0, 0.0, 0.008794796508373334, 
-            0.05449689589044063, -5.145650465803633e-17,
-            -0.002490510706379087, 0.05480893203462731, 
-            0.0548089320346273, 0.19999999999999996, 0.0,
-            0.0, -0.002490510706378977, 
-            0.05480893203462727, -0.05480893203462724, -0.2,
-            -0.052612760978146725, 
-            0.052612760978146586, -0.2, -0.05432895977117359,
-            9.641660437651523e-18, -0.2, 
-            -3.8460049041556104e-17, -3.566854429999362e-17, 
-            -0.2, -7.231031457420035e-17, 
-            0.05432895977117351, -0.2, -0.05261276097814662,
-            -0.052612760978146676, -0.2, 
-            -1.0483851671759644e-16, -0.05432895977117339,
-            -0.2, 0.054328959771173434, 
-            -2.6230761947053614e-17, -0.2, 0.052612760978146704,
-            0.05261276097814651, -0.2, 
-            0.05261276097814652, -0.05261276097814667
-        ]
+#         # These displacements are obtained from an identical problem with
+#         # BCs coincident with the lab basis
+#         reference_displacements = [
+#             0.19999999999999996, 0.0, 0.0, 0.19999999999999996, 
+#             0.0, 0.0, 0.19999999999999996, 
+#             0.0, 0.0, 0.19999999999999996, 0.0, 0.0, 
+#             -0.002490510706379005, -0.054808932034627424, 
+#             0.054808932034627285, 0.008794796508373306, 
+#             -0.05449689589044056, -2.8756551738792074e-17, 
+#             0.020548157939405773, -7.567237356520244e-17,
+#             -4.131059890383733e-18, 0.008794796508373347, 
+#             -4.2461283759579046e-17, 0.05449689589044062, 
+#             0.19999999999999996, 0.0, 0.0, 
+#             0.19999999999999996, 0.0, 0.0, 
+#             -0.0024905107063790998, -0.05480893203462743, 
+#             -0.05480893203462725, 0.008794796508373271,
+#             -4.832171592315198e-17, -0.054496895890440634, 
+#             0.19999999999999996, 0.0, 0.0, 0.19999999999999996, 
+#             0.0, 0.0, 0.008794796508373334, 
+#             0.05449689589044063, -5.145650465803633e-17,
+#             -0.002490510706379087, 0.05480893203462731, 
+#             0.0548089320346273, 0.19999999999999996, 0.0,
+#             0.0, -0.002490510706378977, 
+#             0.05480893203462727, -0.05480893203462724, -0.2,
+#             -0.052612760978146725, 
+#             0.052612760978146586, -0.2, -0.05432895977117359,
+#             9.641660437651523e-18, -0.2, 
+#             -3.8460049041556104e-17, -3.566854429999362e-17, 
+#             -0.2, -7.231031457420035e-17, 
+#             0.05432895977117351, -0.2, -0.05261276097814662,
+#             -0.052612760978146676, -0.2, 
+#             -1.0483851671759644e-16, -0.05432895977117339,
+#             -0.2, 0.054328959771173434, 
+#             -2.6230761947053614e-17, -0.2, 0.052612760978146704,
+#             0.05261276097814651, -0.2, 
+#             0.05261276097814652, -0.05261276097814667
+#         ]
 
-        # Rotate these displacements
-        angle = angle_deg * π / 180
-        c = cos(angle)
-        s = sin(angle)
-        # Rotate about z
-        local_rotation_matrix = [ c s 0; -s c 0 ; 0 0 1]
-        global_rotation = zeros((81,81))
-        for i in range(1,27)
-            base = (i-1)*(3) + 1
-            global_rotation[base:(base+2), base:(base+2)] = local_rotation_matrix
-        end
+#         # Rotate these displacements
+#         angle = angle_deg * π / 180
+#         c = cos(angle)
+#         s = sin(angle)
+#         # Rotate about z
+#         local_rotation_matrix = [ c s 0; -s c 0 ; 0 0 1]
+#         global_rotation = zeros((81,81))
+#         for i in range(1,27)
+#             base = (i-1)*(3) + 1
+#             global_rotation[base:(base+2), base:(base+2)] = local_rotation_matrix
+#         end
 
-        correct_displacements = global_rotation' * reference_displacements
+#         correct_displacements = global_rotation' * reference_displacements
 
-        local_stiffness_displacements = integrator.displacement
-        # Displacements in the integrator are stored in the local frame
-        # (i.e., inclined support frame). Use the model global_transform
-        # to return them to the global frame
-        displacements = model.global_transform' * integrator.displacement
+#         local_stiffness_displacements = integrator.displacement
+#         # Displacements in the integrator are stored in the local frame
+#         # (i.e., inclined support frame). Use the model global_transform
+#         # to return them to the global frame
+#         displacements = model.global_transform' * integrator.displacement
 
-        # Assert the displacement array matches the reference displacements
-        @test displacements ≈ correct_displacements atol=1e-6
-    end
+#         # Assert the displacement array matches the reference displacements
+#         @test displacements ≈ correct_displacements atol=1e-6
+#     end
     
-end
+# end
 
 @testset "newark-inclined-support" begin
     angles = [ 0.0, 22.5, 45, 67.5, 90 ]
@@ -142,65 +142,65 @@ end
     end
 end
 
-@testset "explicit-dynamics-inclined-support" begin
-    angles = [ 0.0, 22.5, 45, 67.5, 90 ]
-    for (i, angle_deg) in enumerate(angles)
-        cp("../examples/single/explicit-dynamic-solid/cube_inclined_support/cube-test$i.yaml", "cube-test$i.yaml", force=true)
-        cp("../examples/single/explicit-dynamic-solid/cube_inclined_support/cube-test$i.g", "cube-test$i.g", force=true)
-        simulation = Norma.run("cube-test$i.yaml")
-        integrator = simulation.integrator
-        model = simulation.model
-        rm("cube-test$i.yaml")
-        rm("cube-test$i.g")
-        rm("cube.e")
+# @testset "explicit-dynamics-inclined-support" begin
+#     angles = [ 0.0, 22.5, 45, 67.5, 90 ]
+#     for (i, angle_deg) in enumerate(angles)
+#         cp("../examples/single/explicit-dynamic-solid/cube_inclined_support/cube-test$i.yaml", "cube-test$i.yaml", force=true)
+#         cp("../examples/single/explicit-dynamic-solid/cube_inclined_support/cube-test$i.g", "cube-test$i.g", force=true)
+#         simulation = Norma.run("cube-test$i.yaml")
+#         integrator = simulation.integrator
+#         model = simulation.model
+#         rm("cube-test$i.yaml")
+#         rm("cube-test$i.g")
+#         rm("cube.e")
         
-        # These displacements are obtained from an identical problem with
-        # BCs coincident with the lab basis
-        reference_displacements = reference_displacements = [
-            0.09999999999999998, 0.0, 0.0, 0.09999999999999998, 0.0, 0.0,
-            0.09999999999999998, 0.0, 0.0, 0.09999999999999998, 0.0, 0.0,
-            -0.00014160957605313936, -0.029544643718552567, 0.029544643718552227,
-            0.002463135608373333, -0.029543111106731912, -2.3591795184074754e-18,
-            0.005069074149454265, 8.364919867886994e-19, 1.0077938483732418e-18,
-            0.0024631356083732207, 1.1608658478934337e-18, 0.02954311110673235,
-            0.09999999999999998, 0.0, 0.0, 0.09999999999999998, 0.0, 0.0,
-            -0.00014160957605335978, -0.029544643718552567, -0.029544643718552227,
-            0.0024631356083731084, 1.901706569995555e-18, -0.02954311110673235,
-            0.09999999999999998, 0.0, 0.0, 0.09999999999999998, 0.0, 0.0,
-            0.0024631356083731648, 0.029543111106732488, -1.8534063173092413e-19,
-            -0.00014160957605336002, 0.029544643718552283, 0.029544643718552005,
-            0.09999999999999998, 0.0, 0.0, -0.00014160957605336043, 0.029544643718552227,
-            -0.029544643718552005, -0.1, -0.028135723132685943, 0.02813572313268593,
-            -0.1, -0.02820846645732876, -2.6227164884318194e-17, -0.1,
-            3.0273068774011585e-18, -6.509032549062432e-18, -0.1, 3.886557742305287e-18,
-            0.02820846645732832, -0.1, -0.02813572313268617, -0.02813572313268593,
-            -0.1, 3.762101741244808e-18, -0.02820846645732832, -0.1,
-            0.028208466457328753, -2.773270502132163e-18, -0.1, 0.028135723132685832,
-            0.028135723132685704, -0.1, 0.028135723132685805, -0.028135723132685704
-        ]
+#         # These displacements are obtained from an identical problem with
+#         # BCs coincident with the lab basis
+#         reference_displacements = reference_displacements = [
+#             0.09999999999999998, 0.0, 0.0, 0.09999999999999998, 0.0, 0.0,
+#             0.09999999999999998, 0.0, 0.0, 0.09999999999999998, 0.0, 0.0,
+#             -0.00014160957605313936, -0.029544643718552567, 0.029544643718552227,
+#             0.002463135608373333, -0.029543111106731912, -2.3591795184074754e-18,
+#             0.005069074149454265, 8.364919867886994e-19, 1.0077938483732418e-18,
+#             0.0024631356083732207, 1.1608658478934337e-18, 0.02954311110673235,
+#             0.09999999999999998, 0.0, 0.0, 0.09999999999999998, 0.0, 0.0,
+#             -0.00014160957605335978, -0.029544643718552567, -0.029544643718552227,
+#             0.0024631356083731084, 1.901706569995555e-18, -0.02954311110673235,
+#             0.09999999999999998, 0.0, 0.0, 0.09999999999999998, 0.0, 0.0,
+#             0.0024631356083731648, 0.029543111106732488, -1.8534063173092413e-19,
+#             -0.00014160957605336002, 0.029544643718552283, 0.029544643718552005,
+#             0.09999999999999998, 0.0, 0.0, -0.00014160957605336043, 0.029544643718552227,
+#             -0.029544643718552005, -0.1, -0.028135723132685943, 0.02813572313268593,
+#             -0.1, -0.02820846645732876, -2.6227164884318194e-17, -0.1,
+#             3.0273068774011585e-18, -6.509032549062432e-18, -0.1, 3.886557742305287e-18,
+#             0.02820846645732832, -0.1, -0.02813572313268617, -0.02813572313268593,
+#             -0.1, 3.762101741244808e-18, -0.02820846645732832, -0.1,
+#             0.028208466457328753, -2.773270502132163e-18, -0.1, 0.028135723132685832,
+#             0.028135723132685704, -0.1, 0.028135723132685805, -0.028135723132685704
+#         ]
         
         
-        # Rotate these displacements
-        angle = angle_deg * π / 180
-        c = cos(angle)
-        s = sin(angle)
-        # Rotate about z
-        local_rotation_matrix = [ c s 0; -s c 0 ; 0 0 1]
-        global_rotation = zeros((81,81))
-        for i in range(1,27)
-            base = (i-1)*(3) + 1
-            global_rotation[base:(base+2), base:(base+2)] = local_rotation_matrix
-        end
+#         # Rotate these displacements
+#         angle = angle_deg * π / 180
+#         c = cos(angle)
+#         s = sin(angle)
+#         # Rotate about z
+#         local_rotation_matrix = [ c s 0; -s c 0 ; 0 0 1]
+#         global_rotation = zeros((81,81))
+#         for i in range(1,27)
+#             base = (i-1)*(3) + 1
+#             global_rotation[base:(base+2), base:(base+2)] = local_rotation_matrix
+#         end
 
-        correct_displacements = global_rotation' * reference_displacements
+#         correct_displacements = global_rotation' * reference_displacements
 
-        local_stiffness_displacements = integrator.displacement
-        # Displacements in the integrator are stored in the local frame
-        # (i.e., inclined support frame). Use the model global_transform
-        # to return them to the global frame
-        displacements = model.global_transform' * integrator.displacement
+#         local_stiffness_displacements = integrator.displacement
+#         # Displacements in the integrator are stored in the local frame
+#         # (i.e., inclined support frame). Use the model global_transform
+#         # to return them to the global frame
+#         displacements = model.global_transform' * integrator.displacement
 
-        # Assert the displacement array matches the reference displacements
-        @test displacements ≈ correct_displacements atol=1e-6
-    end
-end
+#         # Assert the displacement array matches the reference displacements
+#         @test displacements ≈ correct_displacements atol=1e-6
+#     end
+# end

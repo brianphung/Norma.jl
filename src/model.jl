@@ -451,6 +451,14 @@ function evaluate(integrator::TimeIntegrator, model::SolidMechanics)
     if typeof(integrator) == CentralDifference
         lumped_mass = zeros(num_dof)
     end
+    base = 3 * (5 - 1)
+    angle_deg = 45
+    angle = angle_deg * π / 180
+    c = cos(angle)
+    s = sin(angle)
+    local_rotation_matrix = [ c s 0; -s c 0 ; 0 0 1]
+    println("Imposing Following Current Nodal Position 5 (Reference)", model.current[:, 5]) 
+    println("Imposing Following Current Nodal Position 5 (Rotated)", local_rotation_matrix * model.current[:, 5]) 
 
     for blk_index ∈ 1:num_blks
         material = materials[blk_index]

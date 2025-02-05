@@ -281,6 +281,7 @@ function correct(integrator::Newmark, solver::HessianMinimizer, model::SolidMech
     Δt = integrator.time_step
     β = integrator.β
     γ = integrator.γ
+    println("Solver.Solution in Correct: ", solver.solution)
     u = integrator.displacement = solver.solution
     uᵖʳᵉ = integrator.disp_pre
     vᵖʳᵉ = integrator.velo_pre

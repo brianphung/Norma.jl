@@ -538,6 +538,11 @@ function evaluate(integrator::Newmark, solver::HessianMinimizer, model::SolidMec
     solver.hessian = stiffness_matrix + mass_matrix / β / Δt / Δt
     solver.value = stored_energy - external_force ⋅ integrator.displacement + kinetic_energy
     solver.gradient = internal_force - external_force + inertial_force
+    base = 3 * (5 - 1) # Block index in global stiffness
+    println("Post Evaluate Internal Node 5", internal_force[base+1:base+3])
+    println("Post Evaluate External Node 5", external_force[base+1:base+3])
+    println("Post Evaluate Inertial Node 5", inertial_force[base+1:base+3])
+    println("Post Evaluate Gradient Node 5", solver.gradient[base+1:base+3])
 end
 
 function evaluate(integrator::CentralDifference, solver::ExplicitSolver, model::SolidMechanics)
