@@ -4,7 +4,7 @@ Exodus output interval: 1
 CSV output interval: 0
 initial time: 0
 time step: 1e-4
-final time: 0.002
+final time: 3e-4
 same time step for domains: true
 relaxation parameter: 1.0
 naive stabilized: false

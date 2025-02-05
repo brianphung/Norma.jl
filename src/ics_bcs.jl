@@ -671,7 +671,10 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
         source_velo = bc.coupled_subsim.model.velocity[:, closest_face_node_indices] * N
         source_acce = bc.coupled_subsim.model.acceleration[:, closest_face_node_indices] * N
         if node_index == 5
+            println("closest_face_node_indices", closest_face_node_indices)
+            println("Shape Function", N)
             println("Node Index ", node_index, " Source Velocity ", source_velo)  
+            println("Node Index ", node_index, " Source Rotated Velocity ", bc.rotation_matrix *  source_velo)  
             println("Closest Normal ", closest_normal)
             println("Node Index ", node_index, " Pre Velocity ", model.velocity[:, node_index])
         end
@@ -684,10 +687,7 @@ function apply_sm_schwarz_contact_dirichlet(model::SolidMechanics, bc::SMContact
             println("Node Index ", node_index, " Velocity ", model.velocity[:, node_index])
             println("Node Index ", node_index, " Rotated Velocity (For Reference Only): ", bc.rotation_matrix * model.velocity[:, node_index])
         end
-        # if (abs(model.velocity[1, node_index] - model.velocity[2, node_index]) > 1e-2)
-        #     
-        ()
-        # end
+
         model.acceleration[:, node_index] = transfer_normal_component(
             source_acce,
             model.acceleration[:, node_index],
@@ -724,11 +724,23 @@ function apply_sm_schwarz_contact_neumann(model::SolidMechanics, bc::SMContactSc
         global_node = global_from_local_map[local_node]
         node_tractions = schwarz_tractions[:, local_node]
         normal = normals[:, local_node]
-        model.boundary_force[3*global_node-2:3*global_node] += transfer_normal_component(
+        
+
+        normal_transfer = transfer_normal_component(
             node_tractions,
             model.boundary_force[3*global_node-2:3*global_node],
             normal
         )
+        angle_deg = 45
+        angle = angle_deg * π / 180
+        c = cos(angle)
+        s = sin(angle)
+        local_rotation_matrix = [ c s 0; -s c 0 ; 0 0 1]
+        if local_node == 1
+            println("Neumann Node 1 Boundary Force", normal_transfer)
+            println("Neumann Rotated Node 1 BF (Reference Only)", local_rotation_matrix * normal_transfer)
+        end
+        model.boundary_force[3*global_node-2:3*global_node] += normal_transfer
     end
 end
 

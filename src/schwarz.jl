@@ -178,13 +178,6 @@ function restore_stop_solutions(
         end
 
         sims[i].model.internal_force = deepcopy(schwarz_controller.stop_∂Ω_f[i])
-        # If this model has inclined support on, we need to rotate the integrator values
-        if sims[i].model.inclined_support == true
-            global_transform = sims[i].model.global_transform
-            sims[i].integrator.displacement = global_transform * sims[i].integrator.displacement
-            sims[i].integrator.velocity = global_transform * sims[i].integrator.velocity
-            sims[i].integrator.acceleration = global_transform * sims[i].integrator.acceleration
-        end
         copy_solution_source_targets(sims[i].integrator, sims[i].solver, sims[i].model)
     end
 end
