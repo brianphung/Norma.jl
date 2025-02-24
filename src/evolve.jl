@@ -42,15 +42,25 @@ function decrease_time_step(sim::SingleDomainSimulation)
     minimum_time_step = sim.integrator.minimum_time_step
     decrease_factor = sim.integrator.decrease_factor
     if decrease_factor == 1.0
-        error("Cannot adapt time step ", time_step, " because decrease factor is ", decrease_factor,
-            ". Enable adaptive time stepping.")
+        error(
+            "Cannot adapt time step ",
+            time_step,
+            " because decrease factor is ",
+            decrease_factor,
+            ". Enable adaptive time stepping.",
+        )
     end
     new_time_step = decrease_factor * time_step
     if new_time_step < minimum_time_step
-        error("Cannot adapt time step to ", new_time_step, " because minimum is ", minimum_time_step)
+        error(
+            "Cannot adapt time step to ",
+            new_time_step,
+            " because minimum is ",
+            minimum_time_step,
+        )
     end
     sim.integrator.time_step = new_time_step
-    @warn "Time step failure. Decreasing time step." time_step new_time_step
+    @info "Time step failure. Decreasing time step." time_step new_time_step
 end
 
 function increase_time_step(sim::SingleDomainSimulation)
@@ -109,8 +119,20 @@ function apply_ics(sim::SingleDomainSimulation)
     apply_ics(sim.params, sim.model)
 end
 
+function apply_ics(sim::MultiDomainSimulation)
+    for subsim ∈ sim.subsims
+        apply_ics(subsim)
+    end
+end
+
 function apply_bcs(sim::SingleDomainSimulation)
     apply_bcs(sim.model)
+end
+
+function apply_bcs(sim::MultiDomainSimulation)
+    for subsim ∈ sim.subsims
+        apply_bcs(subsim)
+    end
 end
 
 function initialize(sim::SingleDomainSimulation)
@@ -121,8 +143,10 @@ end
 
 function initialize(sim::MultiDomainSimulation)
     initialize_transfer_operators(sim)
+    apply_ics(sim)
+    apply_bcs(sim)
     for subsim ∈ sim.subsims
-        initialize(subsim)
+        initialize(subsim.integrator, subsim.solver, subsim.model)
     end
     detect_contact(sim)
 end
@@ -233,7 +257,10 @@ function advance_time(sim::MultiDomainSimulation)
     final_time = sim.schwarz_controller.final_time
     initial_time = sim.schwarz_controller.initial_time
     num_stops = sim.schwarz_controller.num_stops
-    next_time = round((final_time - initial_time) * Float64(stop) / Float64(num_stops - 1) + initial_time, digits = 12)
+    next_time = round(
+        (final_time - initial_time) * Float64(stop) / Float64(num_stops - 1) + initial_time,
+        digits = 12,
+    )
     sim.schwarz_controller.time = next_time
     sim.schwarz_controller.stop = stop
 end
