@@ -758,7 +758,7 @@ function apply_sm_schwarz_contact_neumann(model::SolidMechanics, bc::SMContactSc
                 normal,
             )
         else
-            model.boundary_force[3*global_node-2:3*global_node] = node_tractions
+            model.boundary_force[3*global_node-2:3*global_node] += node_tractions
         end
     end
 end

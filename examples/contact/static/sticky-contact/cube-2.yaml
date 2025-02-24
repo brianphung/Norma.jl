@@ -25,10 +25,10 @@ boundary conditions:
     - node set: nsx+
       component: x
       function: "0.1 * (abs(t) - 1.0)"
-    - node set: nsy-
+    - node set: nsx+
       component: y
       function: "0.0"
-    - node set: nsz-
+    - node set: nsx+
       component: z
       function: "0.0"
   Schwarz contact:
