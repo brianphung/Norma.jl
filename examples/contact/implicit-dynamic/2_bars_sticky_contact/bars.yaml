@@ -8,6 +8,6 @@ final time: 3.0e-06
 relaxation parameter: 1.0
 naive stabilized: false
 minimum iterations: 1
-maximum iterations: 16
+maximum iterations: 128
 relative tolerance: 1.0e-12
 absolute tolerance: 1.0e-08
