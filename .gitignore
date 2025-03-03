@@ -12,3 +12,5 @@
 *.exo
 **/*-potential-*.csv
 **/*-disp-*.csv
+*.csv
+*.png

@@ -1,0 +1,13 @@
+type: multi
+domains: ["cube-1.yaml", "cube-2.yaml"]
+Exodus output interval: 1
+CSV output interval: 1
+initial time: -1.e-4
+time step: 1.e-4
+final time: 1e-4
+relaxation parameter: {replace_yaml}
+naive stabilized: false
+minimum iterations: 1
+maximum iterations: 1024
+relative tolerance: 1.0e-12
+absolute tolerance: 1.0e-08
