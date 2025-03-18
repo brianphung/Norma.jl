@@ -4,8 +4,8 @@ Exodus output interval: 1
 CSV output interval: 1
 initial time: -1.e-4
 time step: 1.e-4
-final time: 1e-4
-relaxation parameter: 1.0
+final time: 0.0021
+relaxation parameter: 0.8
 naive stabilized: false
 minimum iterations: 1
 maximum iterations: 1024

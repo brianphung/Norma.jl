@@ -4,7 +4,7 @@ Exodus output interval: 1
 CSV output interval: 1
 initial time: -1.e-4
 time step: 1.e-4
-final time: 1e-4
+final time: 0.0021
 relaxation parameter: {replace_yaml}
 naive stabilized: false
 minimum iterations: 1
